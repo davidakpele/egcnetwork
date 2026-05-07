@@ -1,0 +1,243 @@
+syntax = "proto3";
+
+package geofence;
+
+option java_package = "com.geofence.grpc";
+option java_outer_classname = "GeofenceProto";
+option java_multiple_files = true;
+
+// ─── Location Update ───────────────────────────────────────────────────────
+
+message LocationUpdateRequest {
+  string user_id      = 1;
+  double latitude     = 2;
+  double longitude    = 3;
+  double accuracy     = 4;
+  double speed        = 5;
+  double bearing      = 6;
+  double altitude     = 7;
+  int64  timestamp    = 8;
+  string device_id    = 9;
+  string session_id   = 10;
+}
+
+message LocationUpdateResponse {
+  bool    success                    = 1;
+  string  message                    = 2;
+  repeated GeofenceEvent events      = 3;
+  repeated ActiveGeofence geofences  = 4;
+}
+
+// ─── Geofence Event ────────────────────────────────────────────────────────
+
+message GeofenceEvent {
+  string event_id      = 1;
+  string geofence_id   = 2;
+  string geofence_name = 3;
+  string event_type    = 4;  // ENTER / EXIT / DWELL
+  double latitude      = 5;
+  double longitude     = 6;
+  int64  timestamp     = 7;
+  map<string, string> metadata = 8;
+}
+
+message ActiveGeofence {
+  string geofence_id   = 1;
+  string name          = 2;
+  string shape         = 3;
+  bool   is_inside     = 4;
+  double distance      = 5;
+}
+
+// ─── Stream Location ───────────────────────────────────────────────────────
+
+message StreamLocationRequest {
+  string user_id    = 1;
+  string session_id = 2;
+}
+
+message StreamLocationResponse {
+  string user_id   = 1;
+  double latitude  = 2;
+  double longitude = 3;
+  double speed     = 4;
+  double bearing   = 5;
+  int64  timestamp = 6;
+  repeated GeofenceEvent events = 7;
+}
+
+// ─── Geofence CRUD ─────────────────────────────────────────────────────────
+
+message CreateGeofenceRequest {
+  string   name          = 1;
+  string   description   = 2;
+  string   shape         = 3;   // CIRCLE / POLYGON / RECTANGLE
+  double   center_lat    = 4;
+  double   center_lng    = 5;
+  double   radius        = 6;
+  repeated Coordinate coordinates = 7;
+  string   user_id       = 8;
+  bool     is_active     = 9;
+  int32    dwell_time_ms = 10;
+  map<string, string> metadata = 11;
+  string   trigger_on    = 12;  // ENTER / EXIT / BOTH / DWELL
+  string   alert_type    = 13;  // WEBSOCKET / KAFKA / WEBHOOK / ALL
+  string   webhook_url   = 14;
+  int32    max_alerts    = 15;
+  bool     is_global     = 16;
+}
+
+message Coordinate {
+  double latitude  = 1;
+  double longitude = 2;
+}
+
+message CreateGeofenceResponse {
+  bool   success     = 1;
+  string geofence_id = 2;
+  string message     = 3;
+}
+
+message GetGeofenceRequest {
+  string geofence_id = 1;
+}
+
+message GetGeofenceResponse {
+  string   geofence_id    = 1;
+  string   name           = 2;
+  string   description    = 3;
+  string   shape          = 4;
+  double   center_lat     = 5;
+  double   center_lng     = 6;
+  double   radius         = 7;
+  repeated Coordinate coordinates = 8;
+  bool     is_active      = 9;
+  string   created_at     = 10;
+}
+
+message DeleteGeofenceRequest {
+  string geofence_id = 1;
+  string user_id     = 2;
+}
+
+message DeleteGeofenceResponse {
+  bool   success = 1;
+  string message = 2;
+}
+
+message ListGeofencesRequest {
+  string user_id    = 1;
+  int32  page       = 2;
+  int32  page_size  = 3;
+  bool   active_only = 4;
+}
+
+message ListGeofencesResponse {
+  repeated GetGeofenceResponse geofences = 1;
+  int32 total                            = 2;
+  int32 page                             = 3;
+}
+
+// ─── User Location History ─────────────────────────────────────────────────
+
+message LocationHistoryRequest {
+  string user_id   = 1;
+  int64  from_time = 2;
+  int64  to_time   = 3;
+  int32  limit     = 4;
+}
+
+message LocationHistoryResponse {
+  repeated LocationPoint points = 1;
+  int32 total                   = 2;
+}
+
+message LocationPoint {
+  double latitude  = 1;
+  double longitude = 2;
+  double speed     = 3;
+  double bearing   = 4;
+  double altitude  = 5;
+  int64  timestamp = 6;
+}
+
+// ─── Nearby Users ──────────────────────────────────────────────────────────
+
+message NearbyUsersRequest {
+  string user_id    = 1;
+  double latitude   = 2;
+  double longitude  = 3;
+  double radius_km  = 4;
+}
+
+message NearbyUsersResponse {
+  repeated NearbyUser users = 1;
+}
+
+message NearbyUser {
+  string user_id   = 1;
+  string username  = 2;
+  double latitude  = 3;
+  double longitude = 4;
+  double distance  = 5;
+  int64  last_seen = 6;
+}
+
+// ─── Alert Management ──────────────────────────────────────────────────────
+
+message GetAlertsRequest {
+  string user_id   = 1;
+  bool   unread    = 2;
+  int32  page      = 3;
+  int32  page_size = 4;
+}
+
+message GetAlertsResponse {
+  repeated Alert alerts = 1;
+  int32 total           = 2;
+  int32 unread_count    = 3;
+}
+
+message Alert {
+  string alert_id      = 1;
+  string geofence_id   = 2;
+  string geofence_name = 3;
+  string event_type    = 4;
+  string message       = 5;
+  int64  timestamp     = 6;
+  bool   is_read       = 7;
+  double latitude      = 8;
+  double longitude     = 9;
+}
+
+message MarkAlertReadRequest {
+  string alert_id = 1;
+  string user_id  = 2;
+}
+
+message MarkAlertReadResponse {
+  bool success = 1;
+}
+
+// ─── Service Definitions ───────────────────────────────────────────────────
+
+service GeofenceService {
+  // Location tracking
+  rpc UpdateLocation (LocationUpdateRequest) returns (LocationUpdateResponse);
+  rpc StreamLocation (stream LocationUpdateRequest) returns (stream StreamLocationResponse);
+  rpc WatchUser      (StreamLocationRequest) returns (stream StreamLocationResponse);
+
+  // Geofence CRUD
+  rpc CreateGeofence (CreateGeofenceRequest)  returns (CreateGeofenceResponse);
+  rpc GetGeofence    (GetGeofenceRequest)     returns (GetGeofenceResponse);
+  rpc DeleteGeofence (DeleteGeofenceRequest)  returns (DeleteGeofenceResponse);
+  rpc ListGeofences  (ListGeofencesRequest)   returns (ListGeofencesResponse);
+
+  // History & Analytics
+  rpc GetLocationHistory (LocationHistoryRequest) returns (LocationHistoryResponse);
+  rpc GetNearbyUsers     (NearbyUsersRequest)     returns (NearbyUsersResponse);
+
+  // Alerts
+  rpc GetAlerts       (GetAlertsRequest)       returns (GetAlertsResponse);
+  rpc MarkAlertRead   (MarkAlertReadRequest)   returns (MarkAlertReadResponse);
+}
