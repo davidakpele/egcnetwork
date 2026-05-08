@@ -6,9 +6,9 @@ spring:
     name: geofencing
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/geofencing_db
-    username: ${DB_USERNAME:geofence_user}
-    password: ${DB_PASSWORD:geofence_pass}
+    url: jdbc:postgresql://postgres:5432/pesco_db
+    username: postgres
+    password: root
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -31,9 +31,9 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      host: redis
+      port: 6379
+      password:
       timeout: 5000ms
       lettuce:
         pool:
@@ -42,7 +42,7 @@ spring:
           min-idle: 2
 
   kafka:
-    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    bootstrap-servers: kafka:29092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -68,7 +68,7 @@ grpc:
     max-inbound-message-size: 10MB
 
 jwt:
-  secret: ${JWT_SECRET:geofencing-super-secret-key-that-is-at-least-256-bits-long-for-hs512}
+  secret: MLSD72dMlUyRppxbAMZdZMqVtoDOiPHX7GFMdjvNUli28IQT9UM0pLFHv6YaeJstLZeQWAE94hLuNeN5pjmUxFczwAKTg1QiluG4lh
   expiration: 86400000
   refresh-expiration: 604800000
 
