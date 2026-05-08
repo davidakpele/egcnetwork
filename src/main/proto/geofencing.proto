@@ -1,0 +1,252 @@
+syntax = "proto3";
+
+package geofencing;
+option java_package = "com.geofence.grpc";
+option java_outer_classname = "GeofencingProto";
+option java_multiple_files = true;
+
+service LocationService {
+  rpc UpdateLocation (LocationRequest) returns (LocationResponse);
+  rpc StreamLocation (stream LocationRequest) returns (stream LocationEvent);
+  rpc GetCurrentLocation (UserRequest) returns (LocationResponse);
+  rpc GetLocationHistory (LocationHistoryRequest) returns (LocationHistoryResponse);
+  rpc StartTracking (TrackingRequest) returns (TrackingResponse);
+  rpc StopTracking (TrackingRequest) returns (TrackingResponse);
+}
+
+service GeofenceService {
+  rpc CreateGeofence (CreateGeofenceRequest) returns (GeofenceResponse);
+  rpc UpdateGeofence (UpdateGeofenceRequest) returns (GeofenceResponse);
+  rpc DeleteGeofence (DeleteGeofenceRequest) returns (DeleteResponse);
+  rpc GetGeofence (GetGeofenceRequest) returns (GeofenceResponse);
+  rpc ListGeofences (ListGeofencesRequest) returns (ListGeofencesResponse);
+  rpc CheckPointInGeofences (PointCheckRequest) returns (PointCheckResponse);
+  rpc WatchGeofenceEvents (WatchRequest) returns (stream GeofenceEvent);
+}
+
+service AlertService {
+  rpc GetAlerts (GetAlertsRequest) returns (GetAlertsResponse);
+  rpc MarkAlertRead (AlertActionRequest) returns (AlertResponse);
+  rpc AcknowledgeAlert (AlertActionRequest) returns (AlertResponse);
+  rpc StreamAlerts (WatchRequest) returns (stream AlertProto);
+}
+
+message LocationRequest {
+  string user_id = 1;
+  double latitude = 2;
+  double longitude = 3;
+  double altitude = 4;
+  double accuracy = 5;
+  double speed = 6;
+  double heading = 7;
+  int32 battery_level = 8;
+  string device_id = 9;
+  string provider = 10;
+  int64 timestamp_ms = 11;
+}
+
+message LocationResponse {
+  string location_id = 1;
+  string user_id = 2;
+  double latitude = 3;
+  double longitude = 4;
+  double altitude = 5;
+  double speed = 6;
+  double heading = 7;
+  int64 timestamp_ms = 8;
+  repeated GeofenceStatus active_geofences = 9;
+  bool success = 10;
+  string message = 11;
+}
+
+message GeofenceStatus {
+  string geofence_id = 1;
+  string name = 2;
+  bool is_inside = 3;
+  double distance_to_boundary_meters = 4;
+}
+
+message LocationEvent {
+  string event_id = 1;
+  string user_id = 2;
+  double latitude = 3;
+  double longitude = 4;
+  double speed = 5;
+  repeated GeofenceEvent geofence_events = 6;
+  int64 timestamp_ms = 7;
+}
+
+message UserRequest { string user_id = 1; }
+
+message LocationHistoryRequest {
+  string user_id = 1;
+  int64 from_ms = 2;
+  int64 to_ms = 3;
+  int32 limit = 4;
+  int32 offset = 5;
+}
+
+message LocationHistoryResponse {
+  repeated LocationResponse locations = 1;
+  int32 total = 2;
+  bool has_more = 3;
+}
+
+message TrackingRequest {
+  string user_id = 1;
+  string device_id = 2;
+  string session_id = 3;
+}
+
+message TrackingResponse {
+  string session_id = 1;
+  bool success = 2;
+  string message = 3;
+  int64 started_at_ms = 4;
+}
+
+message CreateGeofenceRequest {
+  string owner_id = 1;
+  string name = 2;
+  string description = 3;
+  string geofence_type = 4;
+  repeated Coordinate coordinates = 5;
+  double center_lat = 6;
+  double center_lng = 7;
+  double radius_meters = 8;
+  bool enter_alert = 9;
+  bool exit_alert = 10;
+  bool dwell_alert = 11;
+  int32 dwell_time_seconds = 12;
+  string color = 13;
+  map<string, string> metadata = 14;
+}
+
+message UpdateGeofenceRequest {
+  string geofence_id = 1;
+  string owner_id = 2;
+  string name = 3;
+  string description = 4;
+  bool is_active = 5;
+  bool enter_alert = 6;
+  bool exit_alert = 7;
+  bool dwell_alert = 8;
+  int32 dwell_time_seconds = 9;
+  string color = 10;
+}
+
+message DeleteGeofenceRequest {
+  string geofence_id = 1;
+  string owner_id = 2;
+}
+
+message GetGeofenceRequest { string geofence_id = 1; }
+
+message ListGeofencesRequest {
+  string owner_id = 1;
+  double near_lat = 2;
+  double near_lng = 3;
+  double radius_km = 4;
+  bool active_only = 5;
+  int32 page = 6;
+  int32 size = 7;
+}
+
+message GeofenceResponse {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string owner_id = 4;
+  string geofence_type = 5;
+  repeated Coordinate coordinates = 6;
+  double center_lat = 7;
+  double center_lng = 8;
+  double radius_meters = 9;
+  bool is_active = 10;
+  bool enter_alert = 11;
+  bool exit_alert = 12;
+  bool dwell_alert = 13;
+  int32 dwell_time_seconds = 14;
+  string color = 15;
+  int64 created_at_ms = 16;
+  int64 updated_at_ms = 17;
+}
+
+message ListGeofencesResponse {
+  repeated GeofenceResponse geofences = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message DeleteResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message Coordinate {
+  double latitude = 1;
+  double longitude = 2;
+}
+
+message PointCheckRequest {
+  double latitude = 1;
+  double longitude = 2;
+  string user_id = 3;
+}
+
+message PointCheckResponse {
+  repeated GeofenceResponse containing_geofences = 1;
+  int32 count = 2;
+}
+
+message WatchRequest { string user_id = 1; }
+
+message GeofenceEvent {
+  string event_id = 1;
+  string user_id = 2;
+  string geofence_id = 3;
+  string geofence_name = 4;
+  string event_type = 5;
+  double latitude = 6;
+  double longitude = 7;
+  int32 dwell_duration_seconds = 8;
+  int64 occurred_at_ms = 9;
+}
+
+message GetAlertsRequest {
+  string user_id = 1;
+  bool unread_only = 2;
+  int32 page = 3;
+  int32 size = 4;
+}
+
+message GetAlertsResponse {
+  repeated AlertProto alerts = 1;
+  int32 total = 2;
+  int32 unread_count = 3;
+}
+
+message AlertActionRequest {
+  string alert_id = 1;
+  string user_id = 2;
+}
+
+message AlertResponse {
+  bool success = 1;
+  string message = 2;
+  AlertProto alert = 3;
+}
+
+message AlertProto {
+  string id = 1;
+  string user_id = 2;
+  string geofence_id = 3;
+  string alert_type = 4;
+  string severity = 5;
+  string title = 6;
+  string message = 7;
+  bool is_read = 8;
+  bool is_acknowledged = 9;
+  int64 created_at_ms = 10;
+}
