@@ -21,12 +21,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
  
 @Entity
-@Table(name = "refresh_tokens")
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "device_sessions")
+@Getter 
+@Setter 
+@NoArgsConstructor 
+@AllArgsConstructor 
 @Builder
-public class RefreshToken {
+public class DeviceSession {
  
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,26 +37,32 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
  
-    @Column(nullable = false, unique = true, length = 500)
-    private String token;
+    @Column(name = "device_id", nullable = false, length = 100)
+    private String deviceId;
  
-    @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    @Column(name = "device_name", length = 100)
+    private String deviceName;
  
+    @Column(name = "device_type", length = 50)
+    private String deviceType;
+ 
+    @Column(name = "os_version", length = 50)
+    private String osVersion;
+ 
+    @Column(name = "app_version", length = 20)
+    private String appVersion;
+ 
+    @Column(name = "push_token", length = 500)
+    private String pushToken;
+ 
+    @Column(name = "is_active")
     @Builder.Default
-    private Boolean revoked = false;
+    private Boolean isActive = true;
  
-    @Column(name = "device_info")
-    private String deviceInfo;
- 
-    @Column(name = "ip_address", length = 45)
-    private String ipAddress;
+    @Column(name = "last_seen")
+    private LocalDateTime lastSeen;
  
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
- 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
-    }
 }

@@ -1,20 +1,20 @@
 package com.example.geofencing.Entities;
 
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 
-import com.example.geofencing.Enums.AlertType;
-import com.example.geofencing.Enums.GeofenceShape;
-import com.example.geofencing.Enums.TriggerOnType;
+import com.example.geofencing.Enums.GeofenceType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,7 +26,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,93 +43,72 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class Geofence {
-
+ 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
+ 
+    @Column(nullable = false, length = 100)
+    private String name;
+ 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+ 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
-
-    @Column(nullable = false)
-    private String name;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
+ 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "geofence_type", nullable = false)
     @Builder.Default
-    private GeofenceShape shape = GeofenceShape.CIRCLE;
-
-    @Column(columnDefinition = "GEOMETRY(Point, 4326)")
-    private Point center;
-
-    private Double radius;
-
-    @Column(columnDefinition = "GEOMETRY(Geometry, 4326)")
-    private Geometry boundary;
-
-    @Column(name = "is_active", nullable = false)
+    private GeofenceType geofenceType = GeofenceType.POLYGON;
+ 
+    @Column(columnDefinition = "GEOMETRY(GEOMETRY, 4326)", nullable = false)
+    private Geometry geometry;
+ 
+    @Column(name = "center_point", columnDefinition = "GEOMETRY(POINT, 4326)")
+    private Point centerPoint;
+ 
+    @Column(name = "radius_meters")
+    private Double radiusMeters;
+ 
+    @Column(length = 7)
     @Builder.Default
-    private boolean isActive = true;
-
-    @Column(name = "is_global", nullable = false)
+    private String color = "#FF5733";
+ 
+    @Column(name = "is_active")
     @Builder.Default
-    private boolean isGlobal = false;
-
-    @Column(name = "dwell_time_ms", nullable = false)
+    private Boolean isActive = true;
+ 
+    @Column(name = "is_global")
     @Builder.Default
-    private int dwellTimeMs = 60_000;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "trigger_on", nullable = false)
+    private Boolean isGlobal = false;
+ 
+    @Column(name = "enter_alert")
     @Builder.Default
-    private TriggerOnType triggerOn = TriggerOnType.BOTH;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "alert_type", nullable = false)
+    private Boolean enterAlert = true;
+ 
+    @Column(name = "exit_alert")
     @Builder.Default
-    private AlertType alertType = AlertType.ALL;
-
-    @Column(name = "webhook_url")
-    private String webhookUrl;
-
-    @Column(name = "max_alerts")
+    private Boolean exitAlert = true;
+ 
+    @Column(name = "dwell_alert")
     @Builder.Default
-    private int maxAlerts = 0;
-
-    @Column(name = "alert_count", nullable = false)
+    private Boolean dwellAlert = false;
+ 
+    @Column(name = "dwell_time_seconds")
     @Builder.Default
-    private int alertCount = 0;
-
+    private Integer dwellTimeSeconds = 300;
+ 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    @Builder.Default
-    private Map<String, String> metadata = Map.of();
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    @Builder.Default
-    private Instant createdAt = Instant.now();
-
-    @Column(name = "updated_at", nullable = false)
-    @Builder.Default
-    private Instant updatedAt = Instant.now();
-
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = Instant.now();
-    }
-
-    public boolean hasReachedMaxAlerts() {
-        return maxAlerts > 0 && alertCount >= maxAlerts;
-    }
-
-    public void incrementAlertCount() {
-        this.alertCount++;
-    }
+    private Map<String, Object> metadata;
+ 
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+ 
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

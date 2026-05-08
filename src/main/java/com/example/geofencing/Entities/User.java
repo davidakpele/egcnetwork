@@ -1,27 +1,24 @@
 package com.example.geofencing.Entities;
 
 
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.example.geofencing.Enums.UserRole;
+import com.example.geofencing.Enums.UserStatus;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,18 +44,19 @@ public class User {
     @Column(unique = true, nullable = false, length = 50)
     private String username;
  
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 100)
     private String email;
  
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    @Column(nullable = false)
+    private String password;
  
-    @Column(name = "first_name")
+    @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
  
-    @Column(name = "last_name")
+    @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
  
+    @Column(length = 20)
     private String phone;
  
     @Enumerated(EnumType.STRING)
@@ -66,52 +64,32 @@ public class User {
     @Builder.Default
     private UserRole role = UserRole.USER;
  
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
-    private boolean isActive = true;
- 
-    @Column(name = "is_verified", nullable = false)
-    @Builder.Default
-    private boolean isVerified = false;
- 
-    @Column(name = "avatar_url")
-    private String avatarUrl;
- 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private String timezone = "UTC";
+    private UserStatus status = UserStatus.PENDING_VERIFICATION;
  
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "email_verified")
     @Builder.Default
-    private Instant createdAt = Instant.now();
+    private Boolean emailVerified = false;
  
-    @Column(name = "updated_at", nullable = false)
-    @Builder.Default
-    private Instant updatedAt = Instant.now();
+    @Column(name = "email_verification_token")
+    private String emailVerificationToken;
  
-    @Column(name = "last_login_at")
-    private Instant lastLoginAt;
+    @Column(name = "password_reset_token")
+    private String passwordResetToken;
  
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
+    @Column(name = "password_reset_expires")
+    private LocalDateTime passwordResetExpires;
  
-    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<Geofence> geofences = new HashSet<>();
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
  
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<Alert> alerts = new HashSet<>();
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
  
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = Instant.now();
-    }
- 
-    public String getFullName() {
-        if (firstName != null && lastName != null) {
-            return firstName + " " + lastName;
-        }
-        return firstName != null ? firstName : username;
-    }
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }

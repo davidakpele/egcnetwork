@@ -1,19 +1,20 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: geofencing
 
   datasource:
-      url: jdbc:postgresql://localhost:5432/geofencing_db
-      username: ${DB_USERNAME:postgres}
-      password: ${DB_PASSWORD:postgres}
-      driver-class-name: org.postgresql.Driver
-      hikari:
-        maximum-pool-size: 20
-        minimum-idle: 5
-        connection-timeout: 30000
-        idle-timeout: 600000
-        max-lifetime: 1800000
-  
+    url: jdbc:postgresql://localhost:5432/geofencing_db
+    username: ${DB_USERNAME:geofence_user}
+    password: ${DB_PASSWORD:geofence_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -22,28 +23,24 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        jdbc:
-          batch_size: 50
-        order_inserts: true
-        order_updates: true
- 
+
   flyway:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
- 
+
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
-      timeout: 2000ms
+      timeout: 5000ms
       lettuce:
         pool:
-          max-active: 20
-          max-idle: 10
-          min-idle: 5
- 
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
   kafka:
     bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
     producer:
@@ -55,58 +52,41 @@ spring:
         enable.idempotence: true
         max.in.flight.requests.per.connection: 5
     consumer:
-      group-id: geofencing-service
+      group-id: geofencing-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "com.geofence.*"
-    listener:
-      concurrency: 3
-      ack-mode: manual_immediate
- 
+
   websocket:
     allowed-origins: "*"
- 
+
 grpc:
   server:
     port: 9090
-    security:
-      enabled: false
- 
-server:
-  port: 8080
-  servlet:
-    context-path: /api
- 
+    max-inbound-message-size: 10MB
+
 jwt:
-  secret: ${JWT_SECRET:c29tZXZlcnlsb25nc2VjcmV0a2V5Zm9yamVvZmVuY2luZ3NlcnZpY2UyMDI0}
-  expiration-ms: 86400000        # 24h
-  refresh-expiration-ms: 604800000 # 7d
- 
+  secret: ${JWT_SECRET:geofencing-super-secret-key-that-is-at-least-256-bits-long-for-hs512}
+  expiration: 86400000
+  refresh-expiration: 604800000
+
 geofencing:
   location:
-    history-ttl-days: 30
-    cache-ttl-seconds: 300
-    max-history-points: 10000
-  geofence:
-    max-per-user: 100
-    max-polygon-points: 100
-    default-dwell-time-ms: 60000
-  alerts:
-    max-per-geofence-per-day: 100
-    webhook-timeout-ms: 5000
-  nearby:
-    default-radius-km: 5.0
-    max-radius-km: 50.0
- 
-kafka:
-  topics:
-    location-update: location.updates
-    geofence-event: geofence.events
-    alert-notification: alert.notifications
-    user-tracking: user.tracking
- 
+    update-interval-ms: 1000
+    history-ttl-hours: 24
+    max-history-per-user: 1000
+  cache:
+    user-ttl-seconds: 300
+    geofence-ttl-seconds: 600
+    location-ttl-seconds: 30
+  kafka:
+    topics:
+      location-updates: geofencing.location.updates
+      geofence-events: geofencing.geofence.events
+      alerts: geofencing.alerts
+
 management:
   endpoints:
     web:
@@ -115,10 +95,9 @@ management:
   endpoint:
     health:
       show-details: always
- 
+
 logging:
   level:
     com.geofence: DEBUG
-    org.springframework.kafka: INFO
     io.grpc: INFO
- 
+    org.springframework.kafka: INFO

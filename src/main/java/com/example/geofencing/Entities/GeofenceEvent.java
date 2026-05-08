@@ -7,9 +7,9 @@ import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.locationtech.jts.geom.Point;
 
-import com.example.geofencing.Enums.AlertSeverity;
-import com.example.geofencing.Enums.AlertType;
+import com.example.geofencing.Enums.GeofenceEventType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,14 +27,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
+ 
 @Entity
-@Table(name = "alerts")
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "geofence_events")
+@Getter 
+@Setter 
+@NoArgsConstructor 
+@AllArgsConstructor 
 @Builder
-public class Alert {
+public class GeofenceEvent {
  
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -45,42 +46,32 @@ public class Alert {
     private User user;
  
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "geofence_id")
+    @JoinColumn(name = "geofence_id", nullable = false)
     private Geofence geofence;
  
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "geofence_event_id")
-    private GeofenceEvent geofenceEvent;
- 
     @Enumerated(EnumType.STRING)
-    @Column(name = "alert_type", nullable = false)
-    private AlertType alertType;
+    @Column(name = "event_type", nullable = false)
+    private GeofenceEventType eventType;
  
-    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "GEOMETRY(POINT, 4326)", nullable = false)
+    private Point location;
+ 
     @Column(nullable = false)
-    @Builder.Default
-    private AlertSeverity severity = AlertSeverity.INFO;
+    private Double latitude;
  
-    @Column(nullable = false, length = 200)
-    private String title;
+    @Column(nullable = false)
+    private Double longitude;
  
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String message;
- 
-    @Column(name = "is_read")
-    @Builder.Default
-    private Boolean isRead = false;
- 
-    @Column(name = "is_acknowledged")
-    @Builder.Default
-    private Boolean isAcknowledged = false;
- 
-    @Column(name = "acknowledged_at")
-    private LocalDateTime acknowledgedAt;
+    @Column(name = "dwell_duration_seconds")
+    private Integer dwellDurationSeconds;
  
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private Map<String, Object> metadata;
+ 
+    @Column(name = "occurred_at", nullable = false)
+    @Builder.Default
+    private LocalDateTime occurredAt = LocalDateTime.now();
  
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

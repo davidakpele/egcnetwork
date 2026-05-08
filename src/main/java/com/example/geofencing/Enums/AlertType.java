@@ -1,8 +1,3 @@
 package com.example.geofencing.Enums;
 
-public enum AlertType {
-ALL,
-SOUND,
-VIBRATION,
-NOTIFICATION
-}
+public enum AlertType { GEOFENCE_ENTER, GEOFENCE_EXIT, GEOFENCE_DWELL, SPEED_ALERT, BATTERY_LOW, TRACKING_STARTED, TRACKING_STOPPED }
