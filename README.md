@@ -28,12 +28,6 @@ Build complete Geofencing network system
 
 The system leverages Spring Boot 4.0.6, gRPC, Kafka, PostgreSQL with PostGIS, Redis, and Neo4j to create a scalable, enterprise-grade geofencing solution.
 
-**Repository**: [davidakpele/egcnetwork](https://github.com/davidakpele/egcnetwork)  
-**Owner**: davidakpele  
-**Created**: 2026-05-08  
-**Language**: Java (100%)  
-**Status**: Active Development
-
 ## ✨ Features
 
 - **Geofencing Management**: Create, update, and manage geographical zones with spatial data
