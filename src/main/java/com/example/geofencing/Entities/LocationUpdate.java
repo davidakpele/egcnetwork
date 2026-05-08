@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.locationtech.jts.geom.Point;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,14 +20,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
- 
+
 @Entity
-@Table(name = "refresh_tokens")
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class RefreshToken {
+@Table(name = "location_updates")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class LocationUpdate {
  
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -36,26 +34,34 @@ public class RefreshToken {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
  
-    @Column(nullable = false, unique = true, length = 500)
-    private String token;
+    @Column(columnDefinition = "GEOMETRY(POINT, 4326)", nullable = false)
+    private Point location;
  
-    @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    @Column(nullable = false)
+    private Double latitude;
  
+    @Column(nullable = false)
+    private Double longitude;
+ 
+    private Double altitude;
+    private Double accuracy;
+    private Double speed;
+    private Double heading;
+ 
+    @Column(name = "battery_level")
+    private Integer batteryLevel;
+ 
+    @Column(name = "device_id", length = 100)
+    private String deviceId;
+ 
+    @Column(length = 50)
+    private String provider;
+ 
+    @Column(nullable = false)
     @Builder.Default
-    private Boolean revoked = false;
- 
-    @Column(name = "device_info")
-    private String deviceInfo;
- 
-    @Column(name = "ip_address", length = 45)
-    private String ipAddress;
+    private LocalDateTime timestamp = LocalDateTime.now();
  
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
- 
-    public boolean isExpired() {
-        return LocalDateTime.now().isAfter(expiresAt);
-    }
 }
