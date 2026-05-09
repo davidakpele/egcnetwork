@@ -17,7 +17,7 @@ import com.example.geofencing.Reponses.AuthResponse;
 import com.example.geofencing.Services.AuthService;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

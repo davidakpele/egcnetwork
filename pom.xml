@@ -146,6 +146,7 @@
 			<version>0.12.3</version>
 			<scope>runtime</scope>
 		</dependency>
+		
 		<!-- MapStruct -->
 		<dependency>
 			<groupId>org.mapstruct</groupId>

@@ -13,7 +13,7 @@ import com.example.geofencing.Reponses.ApiResponse;
 import com.example.geofencing.Services.UserService;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
