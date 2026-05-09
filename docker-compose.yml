@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgis/postgis:16-3.4
     container_name: geofence-postgres
     environment:
-      POSTGRES_DB: geofencing_db
+      POSTGRES_DB: pesco_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
     ports:
@@ -13,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d geofencing_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pesco_db"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -71,6 +69,28 @@ services:
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+  app:
+    build: .
+    container_name: geofence-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pesco_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: MLSD72dMlUyRppxbAMZdZMqVtoDOiPHX7GFMdjvNUli28IQT9UM0pLFHv6YaeJstLZeQWAE94hLuNeN5pjmUxFczwAKTg1QiluG4lh
 
 volumes:
   postgres_data:
