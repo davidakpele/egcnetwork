@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/alerts")
+@RequestMapping("/api/alerts")
 @RequiredArgsConstructor
 public class AlertController {
 

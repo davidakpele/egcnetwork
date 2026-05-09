@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pesco_db
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: false
+  data:
+    redis:
+      host: localhost
+  kafka:
+    bootstrap-servers: localhost:9092
