@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8060
 
 spring:
   application:
@@ -97,6 +97,13 @@ management:
 
 logging:
   level:
-    com.geofence: DEBUG
-    io.grpc: INFO
-    org.springframework.kafka: INFO
+    root: INFO
+    com.example.admin_api_service: DEBUG
+    org.springframework.web: INFO 
+    org.springframework.web.servlet.mvc.method.annotation: WARN 
+    org.springframework.security: INFO 
+    org.springframework.security.web.FilterChainProxy: DEBUG 
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
