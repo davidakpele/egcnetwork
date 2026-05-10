@@ -88,7 +88,6 @@ public class AuthService {
                 request.getDeviceName(), request.getDeviceType());
         }
 
-        // Revoke old refresh tokens before issuing new ones
         refreshTokenRepository.revokeAllByUserId(user.getId());
 
         return buildAuthResponse(user);
@@ -104,8 +103,6 @@ public class AuthService {
         }
 
         var user = storedToken.getUser();
-
-        // Rotate the refresh token
         storedToken.setRevoked(true);
         refreshTokenRepository.save(storedToken);
 
@@ -133,18 +130,24 @@ public class AuthService {
         log.info("Password changed for user {}", userId);
     }
 
-    // ── Private helpers ──────────────────────────────────────────────────────
 
     private AuthResponse buildAuthResponse(User user) {
         String accessToken  = jwtService.generateToken(user, user.getId());
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        // Persist the new refresh token
+        // Calculate expiry from the token itself
+        LocalDateTime expiresAt = jwtService.getExpirationDate(refreshToken)
+                .toInstant()
+                .atZone(java.time.ZoneId.systemDefault())
+                .toLocalDateTime();
+
+        // Persist the new refresh token with expiry
         refreshTokenRepository.save(
             RefreshToken.builder()
                 .token(refreshToken)
                 .user(user)
                 .revoked(false)
+                .expiresAt(expiresAt)
                 .build()
         );
 

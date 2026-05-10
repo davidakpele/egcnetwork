@@ -120,7 +120,7 @@ public class SecurityConfiguration {
             .addFilterBefore(rateLimitingFilter,             UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthFilter,                  UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**", "/error/**").permitAll()
+                .requestMatchers("/api/auth/**", "/error/**").permitAll()
                 .requestMatchers(
                     "/swagger-ui.html", "/swagger-ui/**",
                     "/v3/api-docs", "/v3/api-docs/**", "/webjars/**",
@@ -128,7 +128,6 @@ public class SecurityConfiguration {
                 ).permitAll()
                 
                 .requestMatchers("/actuator/**").permitAll()
-                .requestMatchers("/admin/**").hasAnyAuthority("ADMIN", "SUPER_ADMIN")
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider)
