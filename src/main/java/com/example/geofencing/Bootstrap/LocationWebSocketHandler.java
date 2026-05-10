@@ -5,72 +5,71 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-
-import com.example.geofencing.Security.JwtTokenProvider;
+import com.example.geofencing.Services.JwtService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
- 
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class LocationWebSocketHandler extends TextWebSocketHandler {
- 
-    private final JwtTokenProvider jwtTokenProvider;
+
+    private final JwtService jwtService;
     private final ObjectMapper objectMapper;
- 
-    // userId -> list of sessions (multi-device)
+
     private final Map<String, Set<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
-    // sessionId -> userId (reverse lookup)
     private final Map<String, String> sessionUserMap = new ConcurrentHashMap<>();
-    // admin sessions
     private final Set<WebSocketSession> adminSessions = ConcurrentHashMap.newKeySet();
- 
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         String token = extractToken(session);
-        if (token == null || !jwtTokenProvider.validateToken(token)) {
+        if (token == null || !jwtService.validateToken(token)) {
             closeSession(session, CloseStatus.NOT_ACCEPTABLE.withReason("Invalid or missing token"));
             return;
         }
- 
+
         try {
-            var claims = jwtTokenProvider.parseToken(token);
+            var claims = jwtService.extractAllClaims(token);
             String userId = claims.getSubject();
-            String role = (String) claims.get("role");
- 
+
+            // roles are stored as a List in the JWT, e.g. ["ADMIN"] or ["USER"]
+            @SuppressWarnings("unchecked")
+            List<String> roles = (List<String>) claims.get("roles");
+            String role = (roles != null && !roles.isEmpty()) ? roles.get(0) : null;
+
             session.getAttributes().put("userId", userId);
             session.getAttributes().put("role", role);
- 
+
             userSessions.computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet()).add(session);
             sessionUserMap.put(session.getId(), userId);
- 
+
             if ("ADMIN".equals(role) || "OPERATOR".equals(role)) {
                 adminSessions.add(session);
             }
- 
+
             sendToSession(session, Map.of("type", "connected", "userId", userId, "message", "WebSocket connected"));
             log.info("WebSocket connected: user={} sessionId={}", userId, session.getId());
+
         } catch (Exception e) {
             log.error("Error establishing WebSocket connection: {}", e.getMessage());
             closeSession(session, CloseStatus.SERVER_ERROR);
         }
     }
- 
+
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
             var payload = objectMapper.readValue(message.getPayload(), Map.class);
             String type = (String) payload.get("type");
- 
+
             switch (type != null ? type : "") {
                 case "ping" -> sendToSession(session, Map.of("type", "pong", "timestamp", System.currentTimeMillis()));
                 case "subscribe_geofence" -> {
@@ -86,7 +85,7 @@ public class LocationWebSocketHandler extends TextWebSocketHandler {
             log.warn("Error handling WebSocket message: {}", e.getMessage());
         }
     }
- 
+
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String userId = sessionUserMap.remove(session.getId());
@@ -102,40 +101,40 @@ public class LocationWebSocketHandler extends TextWebSocketHandler {
         adminSessions.remove(session);
         log.info("WebSocket disconnected: sessionId={} status={}", session.getId(), status);
     }
- 
+
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.error("WebSocket transport error for session {}: {}", session.getId(), exception.getMessage());
         afterConnectionClosed(session, CloseStatus.SERVER_ERROR);
     }
- 
+
     public void sendLocationUpdate(String userId, Object locationDto) {
         sendToUser(userId, Map.of("type", "location_update", "data", locationDto));
     }
- 
+
     public void sendGeofenceEvent(String userId, Object event) {
         sendToUser(userId, Map.of("type", "geofence_event", "data", event));
     }
- 
+
     public void sendAlertToUser(String userId, Object alert) {
         sendToUser(userId, Map.of("type", "alert", "data", alert));
     }
- 
+
     public void broadcastToAdmins(String type, Object data) {
         Map<String, Object> msg = Map.of("type", type, "data", data);
         for (WebSocketSession session : adminSessions) {
             sendToSession(session, msg);
         }
     }
- 
+
     public int getConnectedUsersCount() {
         return userSessions.size();
     }
- 
+
     public boolean isUserConnected(String userId) {
         return userSessions.containsKey(userId) && !userSessions.get(userId).isEmpty();
     }
- 
+    
     private void sendToUser(String userId, Object message) {
         Set<WebSocketSession> sessions = userSessions.get(userId);
         if (sessions == null || sessions.isEmpty()) return;
@@ -143,7 +142,7 @@ public class LocationWebSocketHandler extends TextWebSocketHandler {
             sendToSession(session, message);
         }
     }
- 
+
     private void sendToSession(WebSocketSession session, Object message) {
         if (!session.isOpen()) return;
         try {
@@ -154,16 +153,14 @@ public class LocationWebSocketHandler extends TextWebSocketHandler {
             log.warn("Failed to send WebSocket message to session {}: {}", session.getId(), e.getMessage());
         }
     }
- 
+
     private String extractToken(WebSocketSession session) {
-        // Try query param first
         String query = session.getUri() != null ? session.getUri().getQuery() : null;
         if (query != null) {
             for (String param : query.split("&")) {
                 if (param.startsWith("token=")) return param.substring(6);
             }
         }
-        // Try header
         List<String> authHeaders = session.getHandshakeHeaders().get("Authorization");
         if (authHeaders != null && !authHeaders.isEmpty()) {
             String header = authHeaders.get(0);
@@ -171,7 +168,7 @@ public class LocationWebSocketHandler extends TextWebSocketHandler {
         }
         return null;
     }
- 
+
     private void closeSession(WebSocketSession session, CloseStatus status) {
         try { session.close(status); } catch (IOException ignored) {}
     }

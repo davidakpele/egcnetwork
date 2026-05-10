@@ -1,7 +1,6 @@
 package com.example.geofencing.Components;
 
 import java.util.List;
-
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
