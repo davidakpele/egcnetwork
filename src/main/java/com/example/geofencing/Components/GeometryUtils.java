@@ -47,7 +47,7 @@ public class GeometryUtils {
         GeometricShapeFactory shapeFactory = new GeometricShapeFactory(FACTORY);
         shapeFactory.setNumPoints(64);
         shapeFactory.setCentre(new Coordinate(centerLng, centerLat));
-        double radiusDegrees = radiusMeters / 111320.0; // approximate meters to degrees
+        double radiusDegrees = radiusMeters / 111320.0; 
         shapeFactory.setWidth(radiusDegrees * 2);
         shapeFactory.setHeight(radiusDegrees * 2);
         return shapeFactory.createCircle();
