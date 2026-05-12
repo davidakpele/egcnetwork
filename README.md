@@ -1,6 +1,6 @@
 # 📍 Geofencing Service
 
-A production-ready geofencing platform built with **Spring Boot 3.2** and **Java 21**. Tracks moving users in real time, fires enter/exit/dwell events when they cross virtual geographic boundaries, and delivers alerts through REST, WebSocket, gRPC, and Kafka simultaneously.
+A production-ready geofencing platform built with **Spring Boot** and **Java 21**. Tracks moving users in real time, fires enter/exit/dwell events when they cross virtual geographic boundaries, and delivers alerts through REST, WebSocket, gRPC, and Kafka simultaneously.
 
 ---
 
